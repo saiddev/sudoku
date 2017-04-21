@@ -6,13 +6,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.ConsoleHandler;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SudokuResolver {
 
 	// private static final Logger LOGGER =
 	// Logger.getLogger(SudokuResolver.class.getName());
-	private static final ConsoleHandler handler = new ConsoleHandler();
+	// private static final ConsoleHandler handler = new ConsoleHandler();
 
 	private static int length = 9;
 	private static int blocLength = 3;
@@ -24,13 +25,20 @@ public class SudokuResolver {
 
 	public static void main(String[] args) {
 		SudokuResolver sudokuResolver = new SudokuResolver();
+		sudokuResolver.resolveBoard();
+	}
 
-		sudokuResolver.readSudoku();
+	private void resolveBoard() {
+		long start = System.currentTimeMillis();
+		readSudoku();
+		// sudokuResolver.readSudokuPostScript();
 		System.out.println("display init matrix");
-		sudokuResolver.displyMatrix(initMatrix);
+		displyMatrix(initMatrix);
 		System.out.println("display clone matrix");
-		sudokuResolver.displyMatrix(matrix);
-		sudokuResolver.resolve();
+		displyMatrix(matrix);
+		resolve();
+		long end = System.currentTimeMillis();
+		System.out.println("resolved in " + (end - start));
 	}
 
 	void displyMatrix(Integer[][] array) {
@@ -50,6 +58,42 @@ public class SudokuResolver {
 		System.out.println("##################");
 	}
 
+	void readSudokuPostScript() {
+		BufferedReader br = null;
+		String fileName = "C:\\cours\\sudoku.ps";
+		try {
+			String sCurrentLine;
+			br = new BufferedReader(new FileReader(fileName));
+			int i = 0;
+			Pattern regex = Pattern.compile("\\((.*?)\\)");
+			while ((sCurrentLine = br.readLine()) != null) {
+				Matcher regexMatcher = regex.matcher(sCurrentLine);
+				int j = 0;
+				while (regexMatcher.find()) {// Finds Matching Pattern in String
+					try {
+						initMatrix[i][j] = Integer.valueOf(regexMatcher.group(1));
+					} catch (NumberFormatException e) {
+
+					}
+					j++;
+				}
+				i++;
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (br != null)
+					br.close();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}
+
+		cloneMatrix(initMatrix, matrix);
+	}
+
 	void readSudoku() {
 		BufferedReader br = null;
 		String fileName = "C:\\cours\\sudo.txt";
@@ -58,10 +102,12 @@ public class SudokuResolver {
 			br = new BufferedReader(new FileReader(fileName));
 			int i = 0;
 			while ((sCurrentLine = br.readLine()) != null) {
-				if (sCurrentLine.contains("|")) {
-					String line = sCurrentLine.substring(sCurrentLine.indexOf("|") + 1, sCurrentLine.lastIndexOf("|"))
-							.replace("| ", "").trim();
-
+				if (sCurrentLine.contains("|") && !sCurrentLine.contains("---")) {
+					// String line =
+					// sCurrentLine.substring(sCurrentLine.indexOf("|") + 1,
+					// sCurrentLine.lastIndexOf("|"))
+					// .replace("| ", "").trim();
+					String line = sCurrentLine.replace("| ", "").trim();
 					String[] split = line.split(" ");
 					for (int j = 0; j < split.length; j++) {
 						try {
@@ -347,13 +393,13 @@ public class SudokuResolver {
 					boolean resolveWithTryPath = path.resolveWithTryPath();
 					if (!resolveWithTryPath) {
 						if (previewsPath == null) {
-							System.out.println("Failed to resolve !!!!!!!!!!");
-							return false;
+							System.out.println("The tried value " + triedNumber + " on top level is rong");
 						} else {
-							System.out.println("back to previews path. currentLevl : " + getLevel() + " batck to : "
-									+ previewsPath.getLevel() + " level");
-							return previewsPath.resolveWithTryPath();
+							System.out.println(
+									"The tried value " + triedNumber + " in " + triedLessMissedPosition.getPosX()
+											+ " , " + triedLessMissedPosition.getPosY() + " is rong");
 						}
+						return resolveWithTryPath();
 					}
 				}
 			}
